@@ -978,6 +978,7 @@ checksum = "1adc00f486adfc9ce99f77d717836f0c5aa84965eb0b4f051f4e83f7cab53f8b"
 dependencies = [
  "futures-channel",
  "futures-core",
+ "futures-executor",
  "futures-io",
  "futures-sink",
  "futures-task",
@@ -2127,6 +2128,7 @@ dependencies = [
  "actix-web-actors",
  "bson 1.2.3",
  "dotenv",
+ "futures",
  "lazy_static",
  "mongodb",
  "rand 0.7.3",

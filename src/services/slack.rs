@@ -33,6 +33,7 @@ async fn slack_events(_req: HttpRequest,body:web::Json<SlackPayload>,app_state: 
     }
     if event.r#type == "message" && RE.is_match(&event.text){
       let song = Song {
+        id: None,
         url: event.text.trim_start_matches('<').trim_end_matches('>').to_string(),
         user: event.user.to_string(),
         channel: event.channel.to_string(),

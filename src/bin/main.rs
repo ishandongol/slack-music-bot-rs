@@ -1,5 +1,5 @@
 use actix_web::{web,App, HttpServer};
-use slack_music_bot::{slack_events,index,websocket_route,websocket_user_count,ws_server,AppState};
+use slack_music_bot::{slack_events,index,playlist,websocket_route,websocket_user_count,ws_server,AppState};
 use dotenv::dotenv;
 use actix::*;
 
@@ -36,6 +36,7 @@ async fn main() -> std::io::Result<()> {
                 .to(websocket_route)    
             )
             .service(index)
+            .service(playlist)
     })
     .bind("0.0.0.0:5000")?
     .run()
