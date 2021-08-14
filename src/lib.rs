@@ -14,8 +14,8 @@ pub struct AppState {
 
 #[derive(Debug, Serialize, Deserialize,Clone)]
 pub struct Song {
-  #[serde(rename="_id",skip_serializing_if="Option::is_none")]
-  id: Option<bson::oid::ObjectId>,
+  #[serde(skip_serializing_if="Option::is_none")]
+  _id: Option<bson::Bson>,
   user:String,
   url:String,
   #[serde(skip_serializing_if="Option::is_none")]

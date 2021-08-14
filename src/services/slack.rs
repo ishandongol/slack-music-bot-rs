@@ -4,8 +4,8 @@ use regex::Regex;
 use lazy_static::lazy_static;
 use super::super::{AppState,Song,ws_server};
 use actix::Addr;
-
 use mongodb::{bson::doc};
+
 #[derive(Debug,Deserialize)]
 struct SlackEvent{
   text:String,
@@ -32,15 +32,17 @@ async fn slack_events(_req: HttpRequest,body:web::Json<SlackPayload>,app_state: 
       static ref RE:regex::Regex = Regex::new(r"https?://(www\.)?(youtube)+\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)").unwrap();
     }
     if event.r#type == "message" && RE.is_match(&event.text){
-      let song = Song {
-        id: None,
+      let mut song = Song {
+        _id: None,
         url: event.text.trim_start_matches('<').trim_end_matches('>').to_string(),
         user: event.user.to_string(),
         channel: event.channel.to_string(),
         title: None,
         description: None,
       };
-      app_state.db.collection("playlist").insert_one(song.clone(),None).await.expect("Failed to create");
+      let response = app_state.db.collection("playlist").insert_one(song.clone(),None).await.expect("Failed to create");
+      let created_id = response.inserted_id;
+      song._id = Some(created_id);
       let stringified_song = serde_json::to_string(&song).unwrap();
       srv.get_ref().clone().do_send(ws_server::NewSong {
         room: "music".to_string(),

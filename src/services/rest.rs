@@ -10,7 +10,7 @@ pub async fn index(_request: HttpRequest) -> impl Responder {
 
 #[get("/playlist")]
 pub async fn playlist(_request: HttpRequest,app_state:web::Data<AppState>) -> impl Responder {
-    let mut cursor=  app_state.db.collection::<Song>("playlist").find(doc!{},None).await.expect("Failed mongo query");
+    let mut cursor=  app_state.db.collection("playlist").find(doc!{},None).await.expect("Failed mongo query");
     let mut playlist:Vec<Song> = Vec::new();
     while let Some(doc) = cursor.next().await {
         match doc {
@@ -20,5 +20,6 @@ pub async fn playlist(_request: HttpRequest,app_state:web::Data<AppState>) -> im
             Err(e) => println!("{}",e)
         }
     }
-    HttpResponse::Ok().content_type("application/json").json(playlist)
+    println!("{:?}",playlist);
+    HttpResponse::Ok().content_type("application/json").json(playlist).await
 }

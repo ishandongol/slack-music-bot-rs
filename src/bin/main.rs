@@ -2,7 +2,7 @@ use actix_web::{web,App, HttpServer};
 use slack_music_bot::{slack_events,index,playlist,websocket_route,websocket_user_count,ws_server,AppState};
 use dotenv::dotenv;
 use actix::*;
-
+use actix_cors::Cors;
 use std::{env,sync::{Arc,atomic::{AtomicUsize},}};
 use mongodb::{options::ClientOptions, Client};
 
@@ -22,12 +22,15 @@ async fn main() -> std::io::Result<()> {
     let user_count = Arc::new(AtomicUsize::new(0));
     let chat_s = ws_server::ChatServer::new(user_count.clone()).start();
     HttpServer::new(move|| {
+        let cors = Cors::default()
+        .allowed_origin("http://localhost:3000");
         App::new()
             .data(AppState{
                 db:db.clone(),
                 user_count: user_count.clone(),
             })
             .data(chat_s.clone())
+            .wrap(cors)
             .service(web::scope("/slack")
             .service(slack_events)
             )
