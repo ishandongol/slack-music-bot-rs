@@ -1,7 +1,7 @@
 //! `ChatServer` is an actor. It musictains list of connection client session.
 //! And manages available rooms. Peers send messages to other peers in same
 //! room through `ChatServer`.
-
+use mongodb::Database;
 use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
 
@@ -68,11 +68,12 @@ pub struct ChatServer {
     sessions: HashMap<usize, Recipient<Message>>,
     rooms: HashMap<String, HashSet<usize>>,
     rng: ThreadRng,
+    db: Database,
     visitor_count: Arc<AtomicUsize>,
 }
 
 impl ChatServer {
-    pub fn new(visitor_count: Arc<AtomicUsize>) -> ChatServer {
+    pub fn new(db:Database,visitor_count: Arc<AtomicUsize>) -> ChatServer {
         // default room
         let mut rooms = HashMap::new();
         rooms.insert("music".to_owned(), HashSet::new());
@@ -80,6 +81,7 @@ impl ChatServer {
         ChatServer {
             sessions: HashMap::new(),
             rooms,
+            db,
             rng: rand::thread_rng(),
             visitor_count,
         }
@@ -91,12 +93,20 @@ impl ChatServer {
     fn send_message(&self, room: &str, message: &str, skip_id: usize) {
         if let Some(sessions) = self.rooms.get(room) {
             for id in sessions {
+                println!("{}",id);
                 if *id != skip_id {
                     if let Some(addr) = self.sessions.get(id) {
                         let _ = addr.do_send(Message(message.to_owned()));
                     }
                 }
             }
+        }
+    }
+    fn send_message_to_id(&self,id:&usize,message: &str) {
+        println!("{}",id);
+        if let Some(addr) = self.sessions.get(id){
+            println!("{}",id);
+            let _ = addr.do_send(Message(message.to_owned())); 
         }
     }
 }
@@ -123,6 +133,7 @@ impl Handler<Connect> for ChatServer {
         // register session with random id
         let id = self.rng.gen::<usize>();
         self.sessions.insert(id, msg.addr);
+        self.send_message_to_id(&id, &id.to_string());
 
         // auto join session to music room
         self.rooms
