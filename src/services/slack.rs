@@ -2,7 +2,7 @@ use actix_web::{post,web, HttpResponse, Responder,HttpRequest};
 use serde::Deserialize;
 use regex::Regex;
 use lazy_static::lazy_static;
-use super::super::{AppState,Song,ws_server};
+use super::super::{AppState,Song,ws_server,YoutubeEmbedResponse};
 use actix::Addr;
 use mongodb::{bson::doc};
 
@@ -33,18 +33,19 @@ async fn slack_events(_req: HttpRequest,body:web::Json<SlackPayload>,app_state: 
     }
     if event.r#type == "message" && RE.is_match(&event.text){
       let url = event.text.trim_start_matches('<').trim_end_matches('>').to_string();
-    //   let resp = reqwest::get(format!("https://www.youtube.com/oembed?url={}&format=json",url))
-    //     .await.expect("Filed to get")
-    //     .json::<YoutubeEmbedResponse>()
-    //     .await.expect("Filed to get");
-    // println!("{:#?}", resp);
+      let resp = reqwest::blocking::get(format!("https://www.youtube.com/oembed?url={}&format=json",url))
+        .expect("Filed to get")
+        .json::<YoutubeEmbedResponse>()
+        .expect("Filed to get");
+    println!("{:#?}", resp);
       let mut song = Song {
         _id: None,
         url,
         user: event.user.to_string(),
         channel: event.channel.to_string(),
-        title: None,
-        description: None,
+        title:Some(resp.title),
+        thumbnail_url:Some(resp.thumbnail_url),
+        description: Some(resp.author_name),
       };
       let response = app_state.db.collection("playlist").insert_one(song.clone(),None).await.expect("Failed to create");
       let created_id = response.inserted_id;

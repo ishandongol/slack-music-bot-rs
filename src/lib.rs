@@ -22,6 +22,8 @@ pub struct Song {
   title: Option<String>,
   #[serde(skip_serializing_if="Option::is_none")]
   description:Option<String>,
+  #[serde(skip_serializing_if="Option::is_none")]
+  thumbnail_url:Option<String>,
   channel: String,
 }
 #[derive(Debug, Serialize, Deserialize,Clone)]
