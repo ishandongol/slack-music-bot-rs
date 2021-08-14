@@ -1,8 +1,7 @@
 use actix_web::{get,web, HttpResponse, Responder,HttpRequest};
 use super::super::{AppState,Song};
 use mongodb::{bson::{doc}}; 
-use bson::Bson;
-use futures::stream::{StreamExt, TryStreamExt};
+use futures::stream::{StreamExt};
 
 #[get("/")]
 pub async fn index(_request: HttpRequest) -> impl Responder {
