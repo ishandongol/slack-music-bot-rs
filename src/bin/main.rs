@@ -20,7 +20,7 @@ async fn main() -> std::io::Result<()> {
     let client = Client::with_options(client_options).expect("No client");
     let db = client.database("music");
     let user_count = Arc::new(AtomicUsize::new(0));
-    let chat_s = ws_server::ChatServer::new(db.clone(),user_count.clone()).start();
+    let chat_s = ws_server::ChatServer::new(user_count.clone()).start();
     HttpServer::new(move|| {
         App::new()
             .data(AppState{

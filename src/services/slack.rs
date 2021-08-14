@@ -38,6 +38,7 @@ async fn slack_events(_req: HttpRequest,body:web::Json<SlackPayload>,app_state: 
         title: None,
         description: None,
       },None).await.expect("Failed to create");
+      
       println!("{}",&event.text.trim_start_matches('<').trim_end_matches('>'));
     }
     if event.r#type == "app_mention" {

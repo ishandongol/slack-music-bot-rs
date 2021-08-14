@@ -1,7 +1,6 @@
 //! `ChatServer` is an actor. It musictains list of connection client session.
 //! And manages available rooms. Peers send messages to other peers in same
 //! room through `ChatServer`.
-use mongodb::Database;
 use actix::prelude::*;
 use rand::{self, rngs::ThreadRng, Rng};
 
@@ -72,12 +71,11 @@ pub struct ChatServer {
     sessions: HashMap<usize, Recipient<Message>>,
     rooms: HashMap<String, HashSet<usize>>,
     rng: ThreadRng,
-    db: Database,
     visitor_count: Arc<AtomicUsize>,
 }
 
 impl ChatServer {
-    pub fn new(db:Database,visitor_count: Arc<AtomicUsize>) -> ChatServer {
+    pub fn new(visitor_count: Arc<AtomicUsize>) -> ChatServer {
         // default room
         let mut rooms = HashMap::new();
         rooms.insert("music".to_owned(), HashSet::new());
@@ -85,7 +83,6 @@ impl ChatServer {
         ChatServer {
             sessions: HashMap::new(),
             rooms,
-            db,
             rng: rand::thread_rng(),
             visitor_count,
         }
