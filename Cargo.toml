@@ -14,3 +14,6 @@ lazy_static = "1.4.0"
 mongodb = { version =  "2.0.0-beta.3", default-features = false, features= ["async-std-runtime"] }
 bson = "1.2.3"
 dotenv = "0.15.0"
+actix = "0.10"
+rand = "0.7"
+actix-web-actors = "3"
