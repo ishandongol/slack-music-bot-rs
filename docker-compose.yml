@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  slack_music_bot_server:
+    container_name: slack_music_bot_server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 5000:5000
+  localtunnel:
+    container_name: localtunnel_slack_music_bot_server
+    image: node:14.16.0-alpine3.13
+    command: npx localtunnel --port 5000 --subdomain ing-music --local-host slack_music_bot_server
+    depends_on:
+      - slack_music_bot_server
