@@ -1,4 +1,4 @@
-//! `ChatServer` is an actor. It maintains list of connection client session.
+//! `ChatServer` is an actor. It musictains list of connection client session.
 //! And manages available rooms. Peers send messages to other peers in same
 //! room through `ChatServer`.
 
@@ -75,7 +75,7 @@ impl ChatServer {
     pub fn new(visitor_count: Arc<AtomicUsize>) -> ChatServer {
         // default room
         let mut rooms = HashMap::new();
-        rooms.insert("Main".to_owned(), HashSet::new());
+        rooms.insert("music".to_owned(), HashSet::new());
 
         ChatServer {
             sessions: HashMap::new(),
@@ -118,20 +118,20 @@ impl Handler<Connect> for ChatServer {
         println!("Someone joined");
 
         // notify all users in same room
-        self.send_message(&"Main".to_owned(), "Someone joined", 0);
+        self.send_message(&"music".to_owned(), "Someone joined", 0);
 
         // register session with random id
         let id = self.rng.gen::<usize>();
         self.sessions.insert(id, msg.addr);
 
-        // auto join session to Main room
+        // auto join session to music room
         self.rooms
-            .entry("Main".to_owned())
+            .entry("music".to_owned())
             .or_insert_with(HashSet::new)
             .insert(id);
 
         let count = self.visitor_count.fetch_add(1, Ordering::SeqCst);
-        self.send_message("Main", &format!("Total visitors {}", count), 0);
+        self.send_message("music", &format!("Total visitors {}", count), 0);
 
         // send id back
         id
