@@ -1,4 +1,4 @@
-//! `ChatServer` is an actor. It musictains list of connection client session.
+//! `ChatServer` is an actor. It maintains list of connection client session.
 //! And manages available rooms. Peers send messages to other peers in same
 //! room through `ChatServer`.
 use actix::prelude::*;
@@ -48,6 +48,16 @@ pub struct ClientMessage {
     pub room: String,
 }
 
+/// Send new to specific room
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct NewSong {
+    /// Peer message
+    pub msg: String,
+    /// Room name
+    pub room: String,
+}
+
 /// List of available rooms
 pub struct ListRooms;
 
@@ -91,10 +101,9 @@ impl ChatServer {
 
 impl ChatServer {
     /// Send message to all users in the room
-    fn send_message(&self, event_type: &str ,room: &str, message: &str, skip_id: usize) {
+    pub fn send_message(&self, event_type: &str ,room: &str, message: &str, skip_id: usize) {
         if let Some(sessions) = self.rooms.get(room) {
             for id in sessions {
-                println!("{}",id);
                 if *id != skip_id {
                     if let Some(addr) = self.sessions.get(id) {
                         let _ = addr.do_send(Message {
@@ -106,10 +115,8 @@ impl ChatServer {
             }
         }
     }
-    fn send_message_to_id(&self,event_type: &str,id:&usize,message: &str) {
-        println!("{}",id);
+    pub fn send_message_to_id(&self,event_type: &str,id:&usize,message: &str) {
         if let Some(addr) = self.sessions.get(id){
-            println!("{}",id);
             let _ = addr.do_send(Message {
                 event_type:event_type.to_owned(),
                 message:message.to_owned(),
@@ -187,6 +194,15 @@ impl Handler<ClientMessage> for ChatServer {
 
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
         self.send_message("message",&msg.room, msg.msg.as_str(), msg.id);
+    }
+}
+
+/// Handler for Message message.
+impl Handler<NewSong> for ChatServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: NewSong, _: &mut Context<Self>) {
+        self.send_message("newSong",&msg.room, msg.msg.as_str(), 0);
     }
 }
 
