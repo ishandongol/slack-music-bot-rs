@@ -8,7 +8,7 @@ use mongodb::{options::ClientOptions, Client};
 
 const DEFAULT_DATABASE_URL:&str = "mongodb://localhost:21017/music";
 
-#[actix_web::main]
+#[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     let database_url:String = match env::var("DATABASE_URL") {

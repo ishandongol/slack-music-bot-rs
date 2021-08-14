@@ -24,3 +24,10 @@ pub struct Song {
   description:Option<String>,
   channel: String,
 }
+#[derive(Debug, Serialize, Deserialize,Clone)]
+pub struct YoutubeEmbedResponse {
+  title: String,
+  author_name:String,
+  thumbnail_url:String,
+  author_url: String,
+}

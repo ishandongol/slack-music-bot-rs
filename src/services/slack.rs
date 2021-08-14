@@ -32,9 +32,15 @@ async fn slack_events(_req: HttpRequest,body:web::Json<SlackPayload>,app_state: 
       static ref RE:regex::Regex = Regex::new(r"https?://(www\.)?(youtube)+\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)").unwrap();
     }
     if event.r#type == "message" && RE.is_match(&event.text){
+      let url = event.text.trim_start_matches('<').trim_end_matches('>').to_string();
+    //   let resp = reqwest::get(format!("https://www.youtube.com/oembed?url={}&format=json",url))
+    //     .await.expect("Filed to get")
+    //     .json::<YoutubeEmbedResponse>()
+    //     .await.expect("Filed to get");
+    // println!("{:#?}", resp);
       let mut song = Song {
         _id: None,
-        url: event.text.trim_start_matches('<').trim_end_matches('>').to_string(),
+        url,
         user: event.user.to_string(),
         channel: event.channel.to_string(),
         title: None,
