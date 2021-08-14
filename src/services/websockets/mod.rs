@@ -88,7 +88,7 @@ impl Handler<server::Message> for WsSession {
   type Result = ();
 
   fn handle(&mut self, msg: server::Message, ctx: &mut Self::Context) {
-      ctx.text(msg.0);
+      ctx.text(serde_json::to_string(&msg).unwrap());
   }
 }
 
