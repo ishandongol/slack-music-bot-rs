@@ -23,7 +23,8 @@ async fn main() -> std::io::Result<()> {
     let chat_s = ws_server::ChatServer::new(user_count.clone()).start();
     HttpServer::new(move|| {
         let cors = Cors::default()
-        .allowed_origin("http://localhost:3000");
+        .allowed_origin("http://localhost:3000")
+        .allowed_origin("https://ing-music.loca.lt");
         App::new()
             .data(AppState{
                 db:db.clone(),

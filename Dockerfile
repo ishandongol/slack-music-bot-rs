@@ -1,11 +1,16 @@
 FROM rust:1.53.0 as build
-WORKDIR /slack-bot
+
+RUN apt-get update
+RUN apt-get install musl-tools -y
+RUN rustup target add x86_64-unknown-linux-musl
+
+WORKDIR /usr/src/api-service
 COPY . .
-RUN cargo build --release
+
+RUN RUSTFLAGS=-Clinker=musl-gcc cargo install -—release —target=x86_64-unknown-linux-musl
 
 FROM alpine:latest
-WORKDIR /slack-music-bot
-COPY --from=build /slack-bot/target/release/main .
-EXPOSE 5000
-CMD ["./main"]
 
+COPY --from=build /usr/local/cargo/bin/api-service /usr/local/bin/api-service
+
+CMD ["api-service"]
