@@ -2,10 +2,13 @@ use mongodb::{bson,Database};
 use serde::{Deserialize, Serialize};
 
 mod services;
+mod utils;
+
 use std::sync::{Arc,atomic::{AtomicUsize}};
 pub use services::slack::*;
 pub use services::rest::*;
 pub use services::websockets::*;
+pub use utils::*;
 
 pub struct AppState {
    pub db: Database,
