@@ -72,8 +72,8 @@ let body_string = str::from_utf8(&raw_body).unwrap();
           let mut song = Song {
             _id: None,
             url,
-            user: event.user.to_string(),
-            channel: event.channel.to_string(),
+            user: Some(event.user.to_string()),
+            channel: Some(event.channel.to_string()),
             title:Some(resp.title),
             thumbnail_url:Some(resp.thumbnail_url),
             description: Some(resp.author_name),
@@ -81,6 +81,8 @@ let body_string = str::from_utf8(&raw_body).unwrap();
           let response = app_state.db.collection("playlist").insert_one(song.clone(),None).await.expect("Failed to create");
           let created_id = response.inserted_id;
           song._id = Some(created_id);
+          song.user= None;
+          song.channel=None;
           let stringified_song = serde_json::to_string(&song).unwrap();
           srv.get_ref().clone().do_send(ws_server::NewSong {
             room: "music".to_string(),

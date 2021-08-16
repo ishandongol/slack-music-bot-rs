@@ -19,7 +19,8 @@ pub struct AppState {
 pub struct Song {
   #[serde(skip_serializing_if="Option::is_none")]
   _id: Option<bson::Bson>,
-  user:String,
+  #[serde(skip_serializing_if="Option::is_none")]
+  user:Option<String>,
   url:String,
   #[serde(skip_serializing_if="Option::is_none")]
   title: Option<String>,
@@ -27,7 +28,8 @@ pub struct Song {
   description:Option<String>,
   #[serde(skip_serializing_if="Option::is_none")]
   thumbnail_url:Option<String>,
-  channel: String,
+  #[serde(skip_serializing_if="Option::is_none")]
+  channel: Option<String>,
 }
 #[derive(Debug, Serialize, Deserialize,Clone)]
 pub struct YoutubeEmbedResponse {
