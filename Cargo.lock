@@ -622,23 +622,6 @@ dependencies = [
 
 [[package]]
 name = "bson"
-version = "1.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "903a4f4c7aa97921f1703acac1fd524e9e082b3228edd34dde07758c0c92c672"
-dependencies = [
- "base64",
- "chrono",
- "hex",
- "lazy_static",
- "linked-hash-map",
- "rand 0.7.3",
- "serde",
- "serde_json",
- "uuid",
-]
-
-[[package]]
-name = "bson"
 version = "2.0.0-beta.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ae99d761c932e2c26fa783d8672d9d4ef601b04a7ecc621509cdb27ff6ce9e4"
@@ -1748,7 +1731,7 @@ dependencies = [
  "async-trait",
  "base64",
  "bitflags",
- "bson 2.0.0-beta.3",
+ "bson",
  "chrono",
  "derivative",
  "futures-core",
@@ -2582,7 +2565,8 @@ dependencies = [
  "actix-service",
  "actix-web",
  "actix-web-actors",
- "bson 1.2.3",
+ "bson",
+ "chrono",
  "dotenv",
  "futures",
  "lazy_static",

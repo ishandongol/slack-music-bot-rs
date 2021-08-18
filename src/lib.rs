@@ -1,6 +1,6 @@
 use mongodb::{bson,Database};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-
 mod services;
 mod utils;
 
@@ -30,6 +30,8 @@ pub struct Song {
   thumbnail_url:Option<String>,
   #[serde(skip_serializing_if="Option::is_none")]
   channel: Option<String>,
+  #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
+  shared_on: DateTime<Utc>,
 }
 #[derive(Debug, Serialize, Deserialize,Clone)]
 pub struct YoutubeEmbedResponse {

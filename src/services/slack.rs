@@ -8,6 +8,7 @@ use mongodb::{bson::doc};
 use slack_http_verifier::SlackVerifier;
 use std::{env,str};
 use futures::StreamExt;
+use chrono::Utc;
 
 #[derive(Debug,Deserialize,Serialize)]
 struct SlackEvent{
@@ -68,8 +69,8 @@ let body_string = str::from_utf8(&raw_body).unwrap();
             .expect("Filed to get")
             .json::<YoutubeEmbedResponse>()
             .expect("Filed to get");
-        println!("{:#?}", resp);
-          let mut song = Song {
+
+        let mut song = Song {
             _id: None,
             url,
             user: Some(event.user.to_string()),
@@ -77,6 +78,7 @@ let body_string = str::from_utf8(&raw_body).unwrap();
             title:Some(resp.title),
             thumbnail_url:Some(resp.thumbnail_url),
             description: Some(resp.author_name),
+            shared_on: Utc::now(),
           };
           let response = app_state.db.collection("playlist").insert_one(song.clone(),None).await.expect("Failed to create");
           let created_id = response.inserted_id;
