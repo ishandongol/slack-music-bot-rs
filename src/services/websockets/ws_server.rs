@@ -86,23 +86,37 @@ pub struct Leave {
 }
 
 /// Sync Music, if room does not exists create new one.
-#[derive(Message)]
+#[derive(Message,Debug,Serialize,Deserialize)]
 #[rtype(result = "()")]
 pub struct SyncMusicPlayPause {
     /// Client id
     pub id: usize,
+    /// is Playing
+    pub playing: String,
+    /// seek 
+    pub seek: String,
+    /// video ID
+    pub video_id: String,
+     /// Video index
+     pub video_index: String,
     /// Room name
-    pub playing: bool,
+    pub name: String,
 }
 
 /// Sync MusicSeek, if room does not exists create new one.
-#[derive(Message)]
+#[derive(Message,Serialize,Deserialize)]
 #[rtype(result = "()")]
 pub struct SyncMusicSeek {
     /// Client id
     pub id: usize,
     /// Room name
-    pub seek: i32,
+    pub seek: String,
+    /// video ID
+    pub video_id: String,
+    /// Video index
+    pub video_index: String,
+    /// Room name
+    pub name: String,
 }
 
 /// `ChatServer` manages chat rooms and responsible for coordinating chat
@@ -110,6 +124,7 @@ pub struct SyncMusicSeek {
 pub struct ChatServer {
     sessions: HashMap<usize, Recipient<Message>>,
     rooms: HashMap<String, HashSet<usize>>,
+    host: Option<usize>,
     rng: ThreadRng,
     visitor_count: Arc<AtomicUsize>,
 }
@@ -123,6 +138,7 @@ impl ChatServer {
         ChatServer {
             sessions: HashMap::new(),
             rooms,
+            host: None,
             rng: rand::thread_rng(),
             visitor_count,
         }
@@ -132,6 +148,7 @@ impl ChatServer {
 impl ChatServer {
     /// Send message to all users in the room
     pub fn send_message(&self, event_type: &str ,room: &str, message: &str, skip_id: usize) {
+        println!("Send message, {}",event_type);
         if let Some(sessions) = self.rooms.get(room) {
             for id in sessions {
                 if *id != skip_id {
@@ -198,7 +215,8 @@ impl Handler<SyncMusicPlayPause> for ChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: SyncMusicPlayPause, _: &mut Context<Self>) {
-        self.send_message("playing","sync", &msg.playing.to_string(), msg.id);
+        println!("SyncHAndler,{:?}",msg);
+        self.send_message("playPause",&msg.name, &serde_json::to_string(&msg).unwrap(), msg.id);
     }
 }
 
@@ -207,7 +225,7 @@ impl Handler<SyncMusicSeek> for ChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: SyncMusicSeek, _: &mut Context<Self>) {
-        self.send_message("seeking","sync", &msg.seek.to_string(), msg.id);
+        self.send_message("seek",&msg.name, &serde_json::to_string(&msg).unwrap(), msg.id);
     }
 }
 
@@ -232,7 +250,20 @@ impl Handler<Disconnect> for ChatServer {
         // send message to other users
         for room in rooms {
             self.send_message("users",&room, "Someone disconnected", 0);
+
+            // make others host
+            if room == "sync" && self.host == Some(msg.id) {
+                self.host=None;
+                if let Some(sessions) = self.rooms.get(&room) {
+                    for id in sessions {
+                        self.send_message_to_id("host", &id, "true");
+                        self.host=Some(*id);
+                        break;
+                    }
+                }
+            }
         }
+        
     }
 }
 
@@ -276,13 +307,19 @@ impl Handler<Join> for ChatServer {
 
     fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
         let Join { id, name } = msg;
-
+        if name == "sync" && self.host == None {
+                self.host=Some(id);
+                self.send_message_to_id("host", &id, "true")
+        }
         self.rooms
             .entry(name.clone())
             .or_insert_with(HashSet::new)
             .insert(id);
         println!("From inside join: {},{}",id,name);
-        self.send_message("users",&name, "Someone connected", id);
+        self.send_message("users",&name, "Someone Joined", id);
+        if name == "sync" {
+            self.send_message("syncRoomJoined",&name, "Someone Joined", id);
+        }
     }
 }
 
@@ -292,6 +329,7 @@ impl Handler<Leave> for ChatServer {
 
     fn handle(&mut self, msg: Leave, _: &mut Context<Self>) {
         let Leave { id, name } = msg;
+
         let mut rooms = Vec::new();
 
         // TODO: optimize this .. access the room directly without loop
@@ -304,6 +342,18 @@ impl Handler<Leave> for ChatServer {
         // send message to other users
         for room in rooms {
             self.send_message("users",&room, "Someone disconnected", 0);
+        }
+
+        if name == "sync" && self.host == Some(id) {
+            self.host = None;
+            if let Some(sessions) = self.rooms.get(&name) {
+                for id in sessions {
+                    self.send_message_to_id("host", &id, "true");
+                    self.host = Some(*id);
+                    break;
+                }
+            }
+            self.send_message_to_id("host", &id, "false");
         }
 
     }

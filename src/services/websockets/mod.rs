@@ -120,7 +120,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
               let m = text.trim();
               // we check for /sss type of messages
               if m.starts_with('/') {
-                  let v: Vec<&str> = m.splitn(2, ' ').collect();
+                  let v: Vec<&str> = m.split(' ').collect();
                   println!("{:?}",v);
                   match v[0] {
                       "/list" => {
@@ -168,6 +168,38 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
                             });
 
                             ctx.text("left room");
+                        } else {
+                            ctx.text("!!! room name is required");
+                        }
+                    }
+                    "/pp" => {
+                        if v.len() == 5 {
+                            self.room = "sync".to_owned();
+                            self.addr.do_send(server::SyncMusicPlayPause {
+                                id: self.id,
+                                seek: v[2].to_owned(),
+                                name: self.room.clone(),
+                                video_id: v[1].to_owned(),
+                                playing: v[3].to_owned(),
+                                video_index: v[4].to_owned(),
+                            });
+                            println!("PP");
+                            ctx.text("play pause");
+                        } else {
+                            ctx.text("!!! room name is required");
+                        }
+                    }
+                    "/seek" => {
+                        if v.len() == 4 {
+                            self.room = "sync".to_owned();
+                            self.addr.do_send(server::SyncMusicSeek {
+                                id: self.id,
+                                seek: v[2].to_owned(),
+                                name: self.room.clone(),
+                                video_id: v[1].to_owned(),
+                                video_index: v[3].to_owned(),
+                            });
+                            ctx.text("seek song");
                         } else {
                             ctx.text("!!! room name is required");
                         }
