@@ -121,6 +121,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
               // we check for /sss type of messages
               if m.starts_with('/') {
                   let v: Vec<&str> = m.splitn(2, ' ').collect();
+                  println!("{:?}",v);
                   match v[0] {
                       "/list" => {
                           // Send ListRooms message to chat server and wait for
@@ -158,6 +159,19 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
                               ctx.text("!!! room name is required");
                           }
                       }
+                      "/leave" => {
+                        if v.len() == 2 {
+                            self.room = v[1].to_owned();
+                            self.addr.do_send(server::Leave {
+                                id: self.id,
+                                name: self.room.clone(),
+                            });
+
+                            ctx.text("left room");
+                        } else {
+                            ctx.text("!!! room name is required");
+                        }
+                    }
                       "/name" => {
                           if v.len() == 2 {
                               self.name = Some(v[1].to_owned());

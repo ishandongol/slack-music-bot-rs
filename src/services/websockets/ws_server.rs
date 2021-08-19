@@ -75,6 +75,36 @@ pub struct Join {
     pub name: String,
 }
 
+/// leave room.
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct Leave {
+    /// Client id
+    pub id: usize,
+    /// Room name
+    pub name: String,
+}
+
+/// Sync Music, if room does not exists create new one.
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct SyncMusicPlayPause {
+    /// Client id
+    pub id: usize,
+    /// Room name
+    pub playing: bool,
+}
+
+/// Sync MusicSeek, if room does not exists create new one.
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct SyncMusicSeek {
+    /// Client id
+    pub id: usize,
+    /// Room name
+    pub seek: i32,
+}
+
 /// `ChatServer` manages chat rooms and responsible for coordinating chat
 /// session. implementation is super primitive
 pub struct ChatServer {
@@ -163,6 +193,24 @@ impl Handler<Connect> for ChatServer {
     }
 }
 
+/// Handler for MusicPlayPause message.
+impl Handler<SyncMusicPlayPause> for ChatServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: SyncMusicPlayPause, _: &mut Context<Self>) {
+        self.send_message("playing","sync", &msg.playing.to_string(), msg.id);
+    }
+}
+
+/// Handler for MusicPlayPause message.
+impl Handler<SyncMusicSeek> for ChatServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: SyncMusicSeek, _: &mut Context<Self>) {
+        self.send_message("seeking","sync", &msg.seek.to_string(), msg.id);
+    }
+}
+
 /// Handler for Disconnect message.
 impl Handler<Disconnect> for ChatServer {
     type Result = ();
@@ -228,11 +276,28 @@ impl Handler<Join> for ChatServer {
 
     fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
         let Join { id, name } = msg;
+
+        self.rooms
+            .entry(name.clone())
+            .or_insert_with(HashSet::new)
+            .insert(id);
+        println!("From inside join: {},{}",id,name);
+        self.send_message("users",&name, "Someone connected", id);
+    }
+}
+
+/// Leave room
+impl Handler<Leave> for ChatServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: Leave, _: &mut Context<Self>) {
+        let Leave { id, name } = msg;
         let mut rooms = Vec::new();
 
+        // TODO: optimize this .. access the room directly without loop
         // remove session from all rooms
         for (n, sessions) in &mut self.rooms {
-            if sessions.remove(&id) {
+            if *n == name && sessions.remove(&id) {
                 rooms.push(n.to_owned());
             }
         }
@@ -241,11 +306,5 @@ impl Handler<Join> for ChatServer {
             self.send_message("users",&room, "Someone disconnected", 0);
         }
 
-        self.rooms
-            .entry(name.clone())
-            .or_insert_with(HashSet::new)
-            .insert(id);
-
-        self.send_message("users",&name, "Someone connected", id);
     }
 }
