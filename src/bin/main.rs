@@ -7,6 +7,8 @@ use std::{env,sync::{Arc,atomic::{AtomicUsize},}};
 use mongodb::{options::ClientOptions, Client};
 
 const DEFAULT_DATABASE_URL:&str = "mongodb://localhost:21017/music";
+const DEFAULT_PORT:&str = "5000";
+const DEFAULT_ORIGIN:&str = "http://localhost:3000";
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -14,6 +16,14 @@ async fn main() -> std::io::Result<()> {
     let database_url:String = match env::var("DATABASE_URL") {
         Ok(val) => val,
         Err(_) => String::from(DEFAULT_DATABASE_URL)
+    };
+    let port:String = match env::var("PORT") {
+        Ok(val) => val,
+        Err(_) => String::from(DEFAULT_PORT)
+    };
+    let allow_origin:String = match env::var("ALLOWED_ORIGIN") {
+        Ok(val) => val,
+        Err(_) => String::from(DEFAULT_ORIGIN)
     };
     let mut client_options = ClientOptions::parse(database_url).await.expect("Failed to connect to mongo");
     client_options.app_name = Some("Slack Bot".to_string());
@@ -23,7 +33,8 @@ async fn main() -> std::io::Result<()> {
     let chat_s = ws_server::ChatServer::new(user_count.clone()).start();
     HttpServer::new(move|| {
         let cors = Cors::default()
-        .allowed_origin("http://localhost:3000")
+        .allowed_origin(&allow_origin)
+        // TODO remove this below 
         .allowed_origin("http://192.168.10.71:3000")
         .allowed_origin("https://ing-music.loca.lt")
         .allowed_origin("https://ishandongol.github.io");
@@ -44,7 +55,7 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(playlist)
     })
-    .bind("0.0.0.0:5000")?
+    .bind(format!("0.0.0.0:{}",port))?
     .run()
     .await
 }
