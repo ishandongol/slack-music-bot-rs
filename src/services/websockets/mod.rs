@@ -204,6 +204,21 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
                             ctx.text("!!! room name is required");
                         }
                     }
+                    "/date" => {
+                        if v.len() == 3 {
+                            println!("date change");
+                            self.room = "sync".to_owned();
+                            self.addr.do_send(server::DateChange {
+                                id: self.id,
+                                name: self.room.clone(),
+                                start_date: v[1].to_owned(),
+                                end_date: v[2].to_owned(),
+                            });
+                            ctx.text("change date");
+                        } else {
+                            ctx.text("!!! room name is required");
+                        }
+                    }
                       "/name" => {
                           if v.len() == 2 {
                               self.name = Some(v[1].to_owned());

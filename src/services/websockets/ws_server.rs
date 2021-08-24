@@ -103,7 +103,7 @@ pub struct SyncMusicPlayPause {
     pub name: String,
 }
 
-/// Sync MusicSeek, if room does not exists create new one.
+/// Sync MusicSeek, 
 #[derive(Message,Serialize,Deserialize)]
 #[rtype(result = "()")]
 pub struct SyncMusicSeek {
@@ -117,6 +117,21 @@ pub struct SyncMusicSeek {
     pub video_index: String,
     /// Room name
     pub name: String,
+}
+
+/// Sync DateChange,
+#[derive(Message,Serialize,Deserialize)]
+#[rtype(result = "()")]
+pub struct DateChange {
+    /// Client id
+    pub id: usize,
+    /// Room name
+    pub name:String,
+    /// Start Date
+    pub start_date: String,
+    /// End Date
+    pub end_date: String,
+    
 }
 
 /// `ChatServer` manages chat rooms and responsible for coordinating chat
@@ -228,6 +243,16 @@ impl Handler<SyncMusicSeek> for ChatServer {
         self.send_message("seek",&msg.name, &serde_json::to_string(&msg).unwrap(), msg.id);
     }
 }
+
+/// Handler for MusicPlayPause message.
+impl Handler<DateChange> for ChatServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: DateChange, _: &mut Context<Self>) {
+        self.send_message("date",&msg.name, &serde_json::to_string(&msg).unwrap(), msg.id);
+    }
+}
+
 
 /// Handler for Disconnect message.
 impl Handler<Disconnect> for ChatServer {
