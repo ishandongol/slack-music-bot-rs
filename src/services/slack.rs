@@ -1,4 +1,4 @@
-use super::super::{fetch_song_info, slack_signature_verification, ws_server, AppState, Song};
+use super::super::{fetch_song_info, slack_signature_verification, ws_server, AppState, Song,raw_request};
 use actix::Addr;
 use actix_web::{
   self, post,
@@ -6,7 +6,6 @@ use actix_web::{
   HttpRequest, HttpResponse, Responder,
 };
 use chrono::Utc;
-use futures::StreamExt;
 use lazy_static::lazy_static;
 use mongodb::bson::doc;
 use regex::Regex;
@@ -29,12 +28,10 @@ struct SlackPayload {
   event: Option<SlackEvent>,
 }
 
-const MAX_SIZE: usize = 262_144; // max payload size is 256k
-
 #[post("/events")]
 async fn slack_events(
   req: HttpRequest,
-  mut payload: Payload,
+  payload: Payload,
   app_state: web::Data<AppState>,
   srv: web::Data<Addr<ws_server::ChatServer>>,
 ) -> impl Responder {
@@ -50,16 +47,18 @@ async fn slack_events(
     .unwrap()
     .to_str()
     .unwrap();
-  let mut raw_body = web::BytesMut::new();
-  while let Some(chunk) = payload.next().await {
-    let chunk = chunk.expect("No chunk");
-    // limit max size of in-memory payload
-    if (raw_body.len() + chunk.len()) > MAX_SIZE {
-      return HttpResponse::Ok().body("MAX SIZE");
-    }
-    raw_body.extend_from_slice(&chunk);
+  let raw_body = raw_request::parse(payload).await;
+  if let Err(err) = raw_body {
+    println!("{:?}",err);
+    return HttpResponse::Ok().body("Payload Parse failed");
   }
-  let body = serde_json::from_slice::<SlackPayload>(&raw_body).expect("ERror parsign body");
+  let raw_body = raw_body.unwrap();
+  let body = serde_json::from_slice::<SlackPayload>(&raw_body);
+  if let Err(err) = body {
+    println!("{:?}",err);
+    return HttpResponse::Ok().body("Failed to deserialize body");
+  }
+  let body = body.unwrap();
   let raw_body = raw_body.freeze();
   let body_string = str::from_utf8(&raw_body).unwrap();
   println!("{:?}", body_string);
@@ -72,6 +71,7 @@ async fn slack_events(
     return HttpResponse::Ok().body("signature verification failed");
   }
   println!("Signature verified");
+
   if body.r#type == "url_verification" {
     let value = body.challenge.as_ref().expect("Not challenged");
     HttpResponse::Ok().body(value)
