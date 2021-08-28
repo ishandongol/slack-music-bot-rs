@@ -66,7 +66,7 @@ async fn slack_events(
 
   // TODO: create middleware for slack payload verification instead of this
   let verification_result =
-    slack_signature_verification::slack_signature_verification(&ts, body_string, &sig);
+    slack_signature_verification::verify(&ts, body_string, &sig);
   if let Err(err) = verification_result {
     println!("{:?}", err);
     return HttpResponse::Ok().body("signature verification failed");
@@ -89,7 +89,7 @@ async fn slack_events(
         .trim_start_matches('<')
         .trim_end_matches('>')
         .to_string();
-      let song_info = fetch_song_info::fetch_song_info(&url);
+      let song_info = fetch_song_info::execute(&url);
       if let Err(err) = song_info {
         println!("Failed to fetch song info {:?}", err);
         return HttpResponse::Ok().body("Failed to fetch info");

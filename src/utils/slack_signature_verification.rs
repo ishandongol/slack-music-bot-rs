@@ -2,7 +2,7 @@ use slack_http_verifier::SlackVerifier;
 use std::env;
 use std::error::Error;
 
-pub fn slack_signature_verification(
+pub fn verify(
     ts: &str,
     body_string: &str,
     sig: &str,
