@@ -22,7 +22,8 @@ pub struct PlaylistQuery {
 pub async fn playlist(_request: HttpRequest,app_state:web::Data<AppState>,query:web::Query<PlaylistQuery>) -> impl Responder {
     let find_options = FindOptions::builder().projection(doc!{
         "channel":0,
-        "user":0
+        "user":0,
+        "client_message_id":0
     }).build();
     let mut cursor=  app_state.db.collection("playlist").find(doc!{
         "shared_on": {
