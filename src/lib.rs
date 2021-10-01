@@ -32,6 +32,7 @@ pub struct Song {
   channel: Option<String>,
   #[serde(with = "bson::serde_helpers::chrono_datetime_as_bson_datetime")]
   shared_on: DateTime<Utc>,
+  client_msg_id: String,
 }
 #[derive(Debug, Serialize, Deserialize,Clone)]
 pub struct YoutubeEmbedResponse {

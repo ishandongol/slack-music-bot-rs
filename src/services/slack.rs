@@ -18,6 +18,7 @@ struct SlackEvent {
   user: String,
   channel: String,
   r#type: String,
+  client_msg_id: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -104,14 +105,18 @@ async fn slack_events(
         thumbnail_url: Some(song_info.thumbnail_url),
         description: Some(song_info.author_name),
         shared_on: Utc::now(),
+        client_msg_id: event.client_msg_id.to_string(),
       };
       let response = app_state
         .db
         .collection("playlist")
         .insert_one(song.clone(), None)
-        .await
-        .expect("Failed to create");
-      let created_id = response.inserted_id;
+        .await;
+      if let Err(err) = response {
+        println!("Duplicate Request, {}",err);
+        return HttpResponse::Ok().body("Duplicate request")
+      }
+      let created_id = response.unwrap().inserted_id;
       song._id = Some(created_id);
       song.user = None;
       song.channel = None;
