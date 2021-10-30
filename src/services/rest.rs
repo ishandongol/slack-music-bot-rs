@@ -18,7 +18,44 @@ pub struct PlaylistQuery {
     #[serde(skip_serializing_if="Option::is_none")]
     pub end_date: Option<String>
 }
-#[get("/playlist")]
+
+#[derive(Debug, Serialize, Deserialize,Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SongsQuery {
+    #[serde(skip_serializing_if="Option::is_none")]
+    pub page_number: Option<u64>,
+    #[serde(skip_serializing_if="Option::is_none")]
+    pub size: Option<u64>
+}
+
+#[get("/songs")]
+pub async fn songs(app_state:web::Data<AppState>,query:web::Query<SongsQuery>) -> impl Responder {
+    let size = match query.size {
+        Some(value) => value,
+        None => 0
+    };
+    let page_number = match query.page_number {
+        Some(value) => value,
+        None => 0
+    };
+    let find_options = FindOptions::builder().projection(doc!{
+        "channel":0,
+        "user":0,
+        "client_message_id":0
+    }).skip(page_number * size).build();
+    let mut cursor = app_state.db.collection("playlist").find(None,find_options).await.expect("Failed Mongo Query");
+    let mut all_songs:Vec<Song> = Vec::new();
+    while let Some(doc) = cursor.next().await {
+        match doc {
+            Ok(item) => {
+                all_songs.push(item)
+            }
+            Err(e) => println!("{}",e)
+        }
+    }
+    HttpResponse::Ok().content_type("application/json").json(all_songs).await
+}
+    #[get("/playlist")]
 pub async fn playlist(_request: HttpRequest,app_state:web::Data<AppState>,query:web::Query<PlaylistQuery>) -> impl Responder {
     let find_options = FindOptions::builder().projection(doc!{
         "channel":0,
