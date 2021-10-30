@@ -23,7 +23,7 @@ pub struct PlaylistQuery {
 #[serde(rename_all = "camelCase")]
 pub struct SongsQuery {
     #[serde(skip_serializing_if="Option::is_none")]
-    pub page_number: Option<u64>,
+    pub page: Option<u64>,
     #[serde(skip_serializing_if="Option::is_none")]
     pub size: Option<u64>
 }
@@ -34,7 +34,7 @@ pub async fn songs(app_state:web::Data<AppState>,query:web::Query<SongsQuery>) -
         Some(value) => value,
         None => 0
     };
-    let page_number = match query.page_number {
+    let page = match query.page {
         Some(value) => value,
         None => 0
     };
@@ -42,8 +42,12 @@ pub async fn songs(app_state:web::Data<AppState>,query:web::Query<SongsQuery>) -
         "channel":0,
         "user":0,
         "client_message_id":0
-    }).skip(page_number * size).build();
-    let mut cursor = app_state.db.collection("playlist").find(None,find_options).await.expect("Failed Mongo Query");
+    }).skip(page * size).limit(size as i64).build();
+    let mut cursor = app_state.db.collection("playlist").find(doc!{
+        "shared_on":{
+            "$lte":Utc::today().and_hms(0, 0, 0)
+        }
+    },find_options).await.expect("Failed Mongo Query");
     let mut all_songs:Vec<Song> = Vec::new();
     while let Some(doc) = cursor.next().await {
         match doc {
