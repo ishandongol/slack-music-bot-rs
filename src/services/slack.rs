@@ -80,7 +80,7 @@ async fn slack_events(
     let event = body.event.as_ref().expect("No event");
     lazy_static! {
       static ref RE: regex::Regex = Regex::new(
-        r"https?://(www\.)?(youtube)+\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+        r"https?://(www\.)?(youtube|youtu)+\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
       )
       .unwrap();
     }
